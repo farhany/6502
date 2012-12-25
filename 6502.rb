@@ -11,31 +11,14 @@ class CPU6502
     @pc_off = 0
     @ram = [ ] * 65536
     @register = { :A => 0, :X => 0, :Y => 0, :SP => 0xFF, :SR => 0 }    
+    @flag = { :S => 0, :V => 0, :B => 0, :D => 0, :I => 0, :Z =>0, :C => 0 } 
     @cpu_instance = 1
     @cpus = @cpus.to_i+1
     @oper1 = 0
     @oper2 = 0
-    
-    @inst = Array.new
-    @inst.push [ 0xA2, :immediate, 2, "LDX", :ldx_i ]
-    @inst.push [ 0xA9, :immediate, 2, "LDA", :lda_i ]
-    @inst.push [ 0xAD, :absolute, 3, "LDA", :lda_a ]
-    @inst.push [ 0xA6, :zeropage, 2, "LDX", :ldx_zp ]
-    @inst.push [ 0xB6, :zeropagey, 2, "LDX", :ldx_zpy ]
-    @inst.push [ 0xAE, :absolute, 2, "LDX", :ldx_a ]
-    @inst.push [ 0xBE, :absolutey, 2, "LDX", :ldx_ay ]
-    @inst.push [ 0x8A, :implied, 1, "TXA", :txa_i ]
-    @inst.push [ 0x20, :absolute, 3, "JSR", :jsr_a ]
-    @inst.push [ 0xE8, :absolute, 1, "INX", :inx_a ]
-    @inst.push [ 0xE0, :absolute, 2, "CPX", :cpx_a ]
-    @inst.push [ 0xD0, :absolute, 2, "BNE", :bne_a ]
-    @inst.push [ 0x00, :absolute, 2, "BRK", :brk_a ]
-    @inst.push [ 0x48, :implied, 1, "PHA", :pha_i ] 
-    @inst.push [ 0x08, :implied, 1, "PLA", :pha_i ] 
-    @inst.push [ 0x00, :implied, 1, "PLP", :plp_i ] 
 
-    @flag = { :S => 0, :V => 0, :B => 0, :D => 0, :I => 0, :Z =>0, :C => 0 } 
   end
+
   def [](r); @registers[r]; end
   def []=(r,v); @registers[r]=v;   end
 
@@ -50,7 +33,7 @@ class CPU6502
       printf("\nPC=%04X\n",@pc)
     end
   end
-
+  
 #(memory[0x0100 + S--]= (BYTE))
   def pha_implied
     display_status
@@ -63,7 +46,7 @@ class CPU6502
     @pc+=1
   end
 
-  def push(oper1=@oper1)
+  def push(oper1 = @oper1)
     display_status
     if debug == 1
       printf("PUSH=%02x\n",oper1)
@@ -98,47 +81,6 @@ class CPU6502
     @prog = File.open(filen, "rb") { |io| io.read }
     @imagesize = @prog.size
   end
-
-  def dumpops
-    #@inst.each do |op| { puts "#{op}" } 
-
-    #printf("op: %X, name: %s\n", @inst[i][0], @inst[i][3]) }
-  end
-
-  def disassembleop(opcode, oper1, oper2)
-    #case opcode
-#    method().call
-  end
-
-#   @inst.push [ 0xA2, :immediate, 2, "LDX", :ldx_i ]
-#   @inst.push [ 0xA9, :immediate, 2, "LDA", :lda_i ]
-#   @inst.push [ 0xAD, :absolute, 3, "LDA", :lda_a ]
-#   @inst.push [ 0xA6, :zeropage, 2, "LDX", :ldx_zp ]
-#   @inst.push [ 0xB6, :zeropagey, 2, "LDX", :ldx_zpy ]
-#   @inst.push [ 0xAE, :absolute, 2, "LDX", :ldx_a ]
-#   @inst.push [ 0xBE, :absolutey, 2, "LDX", :ldx_ay ]
-#   @inst.push [ 0x8A, :implied, 1, "TXA", :txa_i ]
-#   @inst.push [ 0x20, :absolute, 3, "JSR", :jsr_a ]
-#   @inst.push [ 0xE8, :absolute, 1, "INX", :inx_a ]
-#   @inst.push [ 0xE0, :absolute, 2, "CPX", :cpx_a ]
-#   @inst.push [ 0xD0, :absolute, 2, "BNE", :bne_a ]
-#   @inst.push [ 0x00, :absolute, 2, "BRK", :brk_a ]
-#   @inst.push [ 0x48, :implied, 1, "PHA", :pha_i ] 
-#   @inst.push [ 0x08, :implied, 1, "PLA", :pha_i ] 
-#   @inst.push [ 0x00, :implied, 1, "PLP", :plp_i ] 
-  
-  $instr = { 0xA2 => { :name => "LDX" , :mode => :immediate, :operands => 2, :op => :ldx_immediate }, 
-             0x8A => { :name => "TXA" , :mode => :implied, :operands => 1, :op => :txa_implied },
-             0x20 => { :name => "JSR" , :mode => :absolute, :operands => 3, :op => :jsr_absolute },
-             0xE8 => { :name => "INX" , :mode => :absolute, :operands => 1, :op => :inx_absolute },
-             0xE0 => { :name => "CPX" , :mode => :immediate, :operands => 2, :op => :cpx_immediate },
-             0xD0 => { :name => "BNE" , :mode => :immediate, :operands => 2, :op => :bne_relative },
-             0xA9 => { :name => "LDA" , :mode => :immediate, :operands => 2, :op => :lda_immediate },
-             0xAD => { :name => "LDA" , :mode => :absolute, :operands => 3, :op => :lda_absolute },
-             0x48 => { :name => "PHA" , :mode => :implied, :operands => 1, :op => :pha_absolute },
-             0x00 => { :name => "BRK" , :mode => :implied, :operands => 1, :op => :brk_implied },
-
-           }
   
   def brk_implied
     #puts "************** IN BREAK **************"
@@ -201,23 +143,21 @@ class CPU6502
 
   def bne_relative(oper1 = @oper1)
     display_status
-    #	puts "===in BNE==="
-    #        puts @flag[:Z]
     @pc+=1
 
     if (@flag[:Z] == 0)
       if (oper1 > 0x7F)
         @pc = @pc - (~(oper1) & 0x00FF)
-    #            printf("next PC=%04X\n",@pc)
+        # printf("next PC=%04X\n",@pc)
       else
         @pc = @pc + (oper1 & 0x00FF)
         display_pc
       end	
     else
-    #          printf("no match in BNE =-=-=-=-=-=-=-=\n");
+      # printf("no match in BNE =-=-=-=-=-=-=-=\n");
       @pc=@pc+1
     end
-    #	puts("Reached BNE end")
+    # puts("Reached BNE end")
     display_pc
   end  
   
@@ -234,97 +174,73 @@ class CPU6502
     @register[:A] = oper1
     @pc+=2
   end
-  
-  def runop(opcode, oper1, oper2)
-    @oper1 = oper1
-    @oper2 = oper2 
-    method($instr[opcode][:op]).call  
-  end
-  
+
   def readmem(pc)
     @prog[pc]
   end
   
+  
+  $instr = { 0xA2 => { :name => "LDX", :mode => :immediate, :operands => 2, :op => :ldx_immediate }, 
+             0x8A => { :name => "TXA", :mode => :implied, :operands => 1, :op => :txa_implied },
+             0x20 => { :name => "JSR", :mode => :absolute, :operands => 3, :op => :jsr_absolute },
+             0xE8 => { :name => "INX", :mode => :absolute, :operands => 1, :op => :inx_absolute },
+             0xE0 => { :name => "CPX", :mode => :immediate, :operands => 2, :op => :cpx_immediate },
+             0xD0 => { :name => "BNE", :mode => :immediate, :operands => 2, :op => :bne_relative },
+             0xA9 => { :name => "LDA", :mode => :immediate, :operands => 2, :op => :lda_immediate },
+             0xAD => { :name => "LDA", :mode => :absolute, :operands => 3, :op => :lda_absolute },
+             0x48 => { :name => "PHA", :mode => :implied, :operands => 1, :op => :pha_absolute },
+             0x00 => { :name => "BRK", :mode => :implied, :operands => 1, :op => :brk_implied },
+
+           }
+
+    
+  def runop(opcode, oper1, oper2)
+    #printf("[runop] opcode = %04X - %s %02X %02X\n", opcode, $instr[opcode][:name], @oper1, @oper2) 
+    if $instr[opcode][:operands] == 2
+      @oper1 = readmem(@pc+1)
+    elsif $instr[opcode][:operands] == 3
+      @oper1 = readmem(@pc+2)
+      @oper2 = readmem(@pc+1)
+    end
+    
+    method($instr[opcode][:op]).call  
+  end
+  
   def stop
-    printf("Stopping CPU...\n");
+    printf("Stopping CPU...\n")
     Process.exit
   end
   
   def decode
-    @pc=0
-    @operand=Array.new(2)
-    while @pc <= (@pc_off + @prog.size)
-      #puts "inside decode loop - #{@pc} #{@prog.size}"
-      opcode=readmem(@pc)
-      @inst.find do |opc,mode,bytes,desc,method| 
-      if opc == opcode
-        case bytes
-          when 2 
-            @operand[0] = readmem(@pc+1)
-            if debug == 1
-              printf("%04X\t%s #%02X\t\t # %02X%02X -- (%d)\n", @pc,desc, @operand[0], opc, @operand[0], bytes)
-            end
-            if debug == 0
-              runop(opcode, @operand[0], @operand[1])
-	           else
-	            disassembleop(opcode, @operand[0], @operand[1])
-            end
-            #@pc+=2
-          when 1
-            printf("%04X\t%s \t\t #%02X -- (%d)\n", @pc,desc, opc, bytes) unless debug == 0
-            if debug == 0 
-              runop(opcode, @operand[0], @operand[1])
-            else
-              disassembleop(opcode, @operand[0], @operand[1])
-            end
-            #@pc+=1
-          when 3
-            @operand[0] = readmem(@pc+2)
-            @operand[1] = readmem(@pc+1)
-            if debug == 1
-               printf("%04X\t%s $%02X%02X\t\t # %02X%02X%02X -- (%d)\n", @pc,desc, @operand[0], @operand[1], opc, @operand[0],@operand[1], bytes)
-            end
-            # Run only if debug is off
-            if debug == 0
-               runop(opcode, @operand[0], @operand[1])
-            else 
-               disassembleop(opcode, @operand[0], @operand[1])
-            end
-            #@pc+=3
-        end
-#        @pc+=bytes
-        #puts "..."
-      end
+    @pc = 0
+    @operand = Array.new(2)
+    while (@pc <= (@pc_off + @prog.size))
+      opcode = readmem(@pc)
+      @operand[0] = readmem(@pc+2)
+      @operand[1] = readmem(@pc+1)
+#      printf("opcode: %02X\n", opcode)
+      runop(opcode, @operand[0], @operand[1])
     end
-    end 
   end
 end
 
-#mem = File.open("/home/aaron/temp.img", "rb") { |io| io.read }
+unless ARGV.length == 1
+  puts "Dude, not the right number of arguments."
+  puts "Usage: ruby 6502.rb binaryfile.img\n"
+  exit
+end
 
-
-#unless ARGV.length == 1
-#  puts "Dude, not the right number of arguments."
-#  puts "Usage: ruby 6502.rb binaryfile.img\n"
-#  exit
-#end
-
-#input_file = ARGV[0]
-input_file = '/Users/aaron/6502/temp.img'
+input_file = ARGV[0]
+#input_file = '/Users/aaron/6502/temp.img'
 
 a = CPU6502.new
-
-#a.dumpops
-#exit
 puts "Loading file... #{input_file}\n"
 a.loadi(input_file)
 printf("File size: %d\n", a.imagesize)
 a.debug = 0
 a.decode
-a.stop
+#a.stop
 
 #mem.each_byte do |ch|
 #  putc ch
 #end
-
-
