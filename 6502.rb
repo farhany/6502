@@ -8,8 +8,12 @@ class CPU6502
     @ip = 0
     @imagesize = 0
     @pc = 0
+#    @pc_off = 0x1000
     @pc_off = 0
-    @ram = [ ] * 65536
+
+    @ram = Array.new(65536) #was 65536
+    #@ram = [ ] * 65536*10
+
     @register = { :A => 0, :X => 0, :Y => 0, :SP => 0xFF, :SR => 0 }    
     @flag = { :S => 0, :V => 0, :B => 0, :D => 0, :I => 0, :Z =>0, :C => 0 } 
     @cpu_instance = 1
@@ -76,16 +80,53 @@ class CPU6502
   def set_carry(accumulator)
     @flag[:C] = accumulator
   end
+  
+  def set_break(flag)
+    @flag[:B] = flag
+  end
 
   def loadi(filen)
-    @prog = File.open(filen, "rb") { |io| io.read }
-    @imagesize = @prog.size
+    #@img = Array.new
+    @img = File.open(filen, "rb") { |io| io.read }
+    #@img = File.open(filen, "rb")
+
+    @imagesize = @img.size
+    @prog = Array.new(0x1000+@img.size)
+    #@prog = [] * (0x1000+@img.size)
+    #puts (0x1000+@img.size)
+    #@prog[0x1000, (0x1000+@img.size)] = @img
+    #puts @prog.size
+    #puts @img.size
+    #puts "xx"
+    #@prog = @prog.to_a + @img.to_a
+    #puts @prog.size
+    @prog = @img
   end
   
   def brk_implied
-    #puts "************** IN BREAK **************"
-    @pc+1
+    puts "************** IN BREAK **************"
+    @pc=+1
+    # Push return address onto stack
+#    push(@pc >> 8)
+   push((@pc >> 8) & 0xff)
+
+    push(@pc & 0xff)
+    
+    set_break(1)
+    
+    printf("[brk_implied] SR: %04X\n", @register[:SR])
+    push(@register[:SR])
+    set_interrupt(1)
+    @pc = (@ram[0xFFFE].to_i + (@ram[0xFFFF].to_i<<8))
+    printf("[brk_implied] PC = %04X", @pc)
+    #@ram[@register[:SP]+0x100] = @register[:A]
+    #@register[:SP]-=1 #Not sure about this
+    
     Process.exit  
+  end
+  
+  def set_interrupt(flag)
+    @flag[:I] = flag
   end
   
   def ldx_immediate(oper1 = @oper1)
@@ -193,17 +234,35 @@ class CPU6502
 
            }
 
-    
-  def runop(opcode, oper1, oper2)
-    #printf("[runop] opcode = %04X - %s %02X %02X\n", opcode, $instr[opcode][:name], @oper1, @oper2) 
-    if $instr[opcode][:operands] == 2
+  
+  def runop(opcode, oper1, oper2, disasm = 0)
+    if disasm == 1
+      printf("operands: %04X\n", $instr[opcode][:operands])
+    end
+    case $instr[opcode][:operands]
+    when 1
+      if disasm == 1
+        printf("%04X %s\n", @pc, $instr[opcode][:name])
+        @pc+=$instr[opcode][:operands]
+      end
+    when 2
       @oper1 = readmem(@pc+1)
-    elsif $instr[opcode][:operands] == 3
+      if disasm == 1
+        printf("%04X %s #%02X\n", @pc, $instr[opcode][:name], @oper1) 
+        @pc+=$instr[opcode][:operands]
+      end
+    when 3
       @oper1 = readmem(@pc+2)
       @oper2 = readmem(@pc+1)
+      if disasm == 1
+        printf("%04X %s 0x%02X%02X\n", @pc, $instr[opcode][:name], @oper1, @oper2) 
+        @pc+=$instr[opcode][:operands]
+      end
     end
     
-    method($instr[opcode][:op]).call  
+    if disasm == 0
+      method($instr[opcode][:op]).call  
+    end
   end
   
   def stop
@@ -212,15 +271,30 @@ class CPU6502
   end
   
   def decode
-    @pc = 0
+    @pc = @pc_off
     @operand = Array.new(2)
-    while (@pc <= (@pc_off + @prog.size))
+    printf("prog.size: %d\n", @imagesize+@pc_off)
+    while (@pc < (@pc_off + @imagesize-1))
       opcode = readmem(@pc)
       @operand[0] = readmem(@pc+2)
       @operand[1] = readmem(@pc+1)
-#      printf("opcode: %02X\n", opcode)
-      runop(opcode, @operand[0], @operand[1])
+      printf("opcode: %02X  ", opcode)
+      runop(opcode, @operand[0], @operand[1], 1)
     end
+    debug=1
+    display_pc
+    debug=0
+    @pc = @pc_off
+    while (@pc < (@pc_off + @imagesize-1))
+      opcode = readmem(@pc)
+      @operand[0] = readmem(@pc+2)
+      @operand[1] = readmem(@pc+1)
+      runop(opcode, @operand[0], @operand[1], 0)
+      display_pc
+    end
+    #debug = 1
+    display_pc
+    #debug = 0
   end
 end
 
