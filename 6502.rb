@@ -241,33 +241,6 @@ class CPU6502
     method($instr[opcode][:op]).call  
   end
   
-  def runop_(opcode, oper1, oper2)
-    display_status
-    case opcode
-      when 0xA2 #LDX
-        ldx_immediate(oper1)
-      when 0x8A #TXA
-        txa_implied
-      when 0x20 #JSR
-        jsr_absolute(oper1, oper2)
-      when 0xE8 #INX
-        inx_absolute
-      when 0xE0 #CPX
-        cpx_immediate(oper1)
-      when 0xD0 #BNE
-        bne_relative(oper1)
-      when 0xA9 #LDA
-        lda_immediate(oper1)
-      when 0xAD #LDA Absolute with Operand
-        lda_absolute(oper1)
-      when 0x48
-        pha_implied(oper1)
-      when 00 #BRK
-        brk_implied
-    end
-    display_status
-  end
-
   def readmem(pc)
     @prog[pc]
   end
