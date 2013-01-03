@@ -9,9 +9,14 @@ class CPU6502
     @imagesize = 0
     @pc = 0
 #    @pc_off = 0x1000
-    @pc_off = 0
+    @pc_off = 0x1000
 
-    @ram = Array.new(65536) #was 65536
+    @RAM_SIZE = 1024 * 64
+    #RAM = Array.new(RAM_SIZE)
+
+    @ram = Array.new(@RAM_SIZE) #was 65536
+    @prog = Array.new(@RAM_SIZE) #was 65536
+
     #@ram = [ ] * 65536*10
 
     @register = { :A => 0, :X => 0, :Y => 0, :SP => 0xFF, :SR => 0 }    
@@ -85,13 +90,20 @@ class CPU6502
     @flag[:B] = flag
   end
 
-  def loadi(filen)
+  def loadimage(filename)
     #@img = Array.new
-    @img = File.open(filen, "rb") { |io| io.read }
+  ##  @img = File.open(filen, "rb") { |io| io.read }
     #@img = File.open(filen, "rb")
 
-    @imagesize = @img.size
-    @prog = Array.new(0x1000+@img.size)
+    @img = File.read(filename)
+    #RAM_SIZE = 1024 * 64
+    #RAM = Array.new(RAM_SIZE)
+
+    @imagesize = @img.bytesize
+
+#    RAM[0x1000, @imagesize] = @prog.bytes.to_a
+
+#    @prog = Array.new(0x1000+@img.size)
     #@prog = [] * (0x1000+@img.size)
     #puts (0x1000+@img.size)
     #@prog[0x1000, (0x1000+@img.size)] = @img
@@ -100,7 +112,8 @@ class CPU6502
     #puts "xx"
     #@prog = @prog.to_a + @img.to_a
     #puts @prog.size
-    @prog = @img
+ #   @prog = @img
+    @prog[0x1000, @imagesize] = @img.bytes.to_a
   end
   
   def brk_implied
@@ -298,18 +311,18 @@ class CPU6502
   end
 end
 
-unless ARGV.length == 1
-  puts "Dude, not the right number of arguments."
-  puts "Usage: ruby 6502.rb binaryfile.img\n"
-  exit
-end
+#unless ARGV.length == 1
+#  puts "Dude, not the right number of arguments."
+#  puts "Usage: ruby 6502.rb binaryfile.img\n"
+#  exit
+#end
 
 input_file = ARGV[0]
-#input_file = '/Users/aaron/6502/temp.img'
+input_file = '/Users/aaron/6502/temp.img'
 
 a = CPU6502.new
 puts "Loading file... #{input_file}\n"
-a.loadi(input_file)
+a.loadimage(input_file)
 printf("File size: %d\n", a.imagesize)
 a.debug = 0
 a.decode
